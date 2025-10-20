@@ -1,16 +1,21 @@
-name: Teste GitHub Actions
+name: Terraform Security Check with Checkov
 
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
-  hello-world:
+  checkov-scan:
     runs-on: ubuntu-latest
+    name: Run Checkov Security Scan
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Exibir mensagem
-        run: echo "🚀 Olá, o GitHub Actions está funcionando!"
+      - name: Instalar o Checkov
+        run: pip install checkov
+
+      - name: Rodar análise de segurança
+        run: checkov -d . --quiet
