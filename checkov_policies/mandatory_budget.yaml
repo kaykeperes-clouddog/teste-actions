@@ -1,0 +1,13 @@
+metadata:
+  id: CUSTOM_AWS_BUDGET_1
+  name: "Ensure at least one AWS Budget is defined"
+  category: "COST_MANAGEMENT"
+
+scope:
+  provider: aws
+
+definition:
+  cond_type: connection
+  resource_types:
+    - aws_budgets_budget
+  operator: exists
