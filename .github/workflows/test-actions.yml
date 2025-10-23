@@ -23,7 +23,8 @@ jobs:
       - name: Instalar Dependências (Checkov e JQ)
         run: |
           pip install checkov
-          # A imagem do CodeBuild é Amazon Linux, então usamos 'yum' pse
+          # O 'jq' é necessário para ler a resposta JSON do assume-role
+          # A imagem do CodeBuild é baseada em Ubuntu, então usamos apt-get
           yum install -y jq
 
       - name: Assumir Role da conta PRD e exportar credenciais
