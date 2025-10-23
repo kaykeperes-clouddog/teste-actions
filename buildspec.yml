@@ -14,4 +14,4 @@ phases:
   build:
     commands:
       - echo "Rodando análise de segurança com Checkov..."
-      - checkov -d . --config-file checkov.yml || true
+      - checkov -d . --config-file .checkov.yml || true
