@@ -2,9 +2,10 @@ name: Terraform Security Check with Checkov
 
 # Dispara o workflow em todo push para a branch 'main'
 on:
-  push:
-    branches: [ main ]
-
+  pull_request:
+    branches:
+      - main
+ #Leitura leitura
 permissions:
   contents: read # Apenas leitura do repositório
 
