@@ -1,0 +1,130 @@
+framework: terraform
+
+#  Regras selecionadas
+check:
+
+  # -------------------------
+  #  Provider
+  # -------------------------
+  - CKV_AWS_41    # Ensure no hard coded AWS access key and secret key exists in provider
+
+  # -------------------------
+  #  S3 Buckets
+  # -------------------------
+  - CKV_AWS_19    # S3 bucket criptografado em repouso
+  - CKV_AWS_19    # S3 bucket server-side encryption configuration
+  - CKV_AWS_20    # S3 bucket não deve permitir acesso público leitura
+  - CKV2_AWS_6    # S3 bucket deve ter bloqueio de acesso público habilitado
+
+  # -------------------------
+  #  Security Groups
+  # -------------------------
+  - CKV_AWS_23    # Security group e regras devem ter descrição
+  - CKV_AWS_24    # SG não deve permitir SSH de 0.0.0.0/0
+  - CKV_AWS_25    # SG não deve permitir RDP de 0.0.0.0/0
+  - CKV_AWS_277   # SG não deve permitir ingress de 0.0.0.0/0 em todas portas
+  - CKV_AWS_382   # SG não deve permitir egress de 0.0.0.0/0 para todas portas
+  - CKV2_AWS_5    # SG deve estar anexado a algum recurso
+  - CKV2_AWS_12   # Security group padrão da VPC deve restringir tráfego
+
+  # -------------------------
+  #  EBS
+  # -------------------------
+  - CKV_AWS_106   # EBS encryption by default habilitado
+  - CKV2_AWS_2    # Apenas EBS volumes criptografados anexados a instâncias EC2
+
+  # -------------------------
+  #  RDS / DB
+  # -------------------------
+  - CKV_AWS_96    # Aurora criptografado em repouso
+  - CKV_AWS_139   # RDS clusters com proteção contra exclusão habilitada
+  - CKV_AWS_140   # RDS global cluster criptografado
+  - CKV_AWS_146   # Snapshot de RDS criptografado
+  - CKV_AWS_293   # Instância de RDS com proteção contra exclusão habilitada
+  - CKV_AWS_302   # Snapshots de DB não devem ser públicos
+  - CKV_AWS_313   # RDS cluster deve copiar tags para snapshots
+  - CKV2_AWS_60   # RDS instance deve copiar tags para snapshots
+  - CKV2_AWS_69   # RDS instance com criptografia em trânsito habilitada
+  
+  # -------------------------
+  #  IAM
+  # -------------------------
+  - CKV_AWS_49    # IAM policy não deve permitir "*" em actions
+  - CKV_AWS_60    # IAM role deve permitir apenas serviços específicos
+  - CKV_AWS_61    # IAM policy não deve permitir assume role em todos serviços
+  - CKV_AWS_62    # IAM policies não devem ter privilégios administrativos
+  - CKV_AWS_63    # IAM group policy não deve permitir "*" em actions
+  - CKV_AWS_107   # IAM policy não deve permitir exposição de credenciais
+  - CKV_AWS_108   # IAM policy não deve permitir exfiltração de dados
+  - CKV_AWS_109   # IAM policy não deve permitir permissões sem restrição
+  - CKV_AWS_110   # IAM policy não deve permitir privilege escalation
+  - CKV_AWS_111   # IAM policy não deve permitir write sem restrição
+  - CKV_AWS_274   # Não permitir uso de AdministratorAccess
+  - CKV_AWS_289   # IAM group policy não deve permitir permissões sem restrição
+  - CKV_AWS_290   # IAM group policy não deve permitir write sem restrição
+  - CKV2_AWS_40   # IAM policy não deve permitir full IAM privileges
+
+  # -------------------------
+  #  ECS / EKS
+  # -------------------------
+  - CKV_AWS_97    # ECS task definition com EFS encryption in transit
+  - CKV_AWS_223   # ECS Cluster deve habilitar logging do ECS Exec
+  - CKV_AWS_332   # ECS Fargate services devem rodar na versão mais recente
+  - CKV_AWS_333   # ECS service não deve ter public IP automaticamente
+  - CKV_AWS_334   # ECS containers devem rodar como não privilegiados
+
+  # -------------------------
+  #  CloudWatch / Logs
+  # -------------------------
+  - CKV_AWS_66    # CloudWatch log group deve ter retenção configurada
+
+  # -------------------------
+  #  CloudFront / CDN
+  # -------------------------
+  - CKV_AWS_174   # CloudFront Viewer Certificate usando TLS 1.2
+
+  # -------------------------
+  #  Lambda
+  # -------------------------
+  - CKV_AWS_45    # Lambda não deve ter secrets hardcoded
+  - CKV_AWS_115   # Lambda com execução concorrente configurada
+  - CKV_AWS_173   # Lambda deve ter variáveis de ambiente criptografadas
+
+  # -------------------------
+  #  EC2
+  # -------------------------
+  - CKV_AWS_46    # EC2 não deve ter secrets hardcoded no user data
+  - CKV_AWS_79    # IMDSv1 não habilitado
+  - CKV_AWS_88    # EC2 não deve ter public IP
+  - CKV2_AWS_41   # EC2 deve ter IAM Role anexado
+  - CKV_AWS_135   # EC2 deve ser EBS optimized
+
+  # -------------------------
+  #  Outros serviços
+  # -------------------------
+  - CKV_AWS_29    # ElastiCache encrypted at rest
+  - CKV_AWS_30    # ElastiCache encrypted in transit
+  - CKV_AWS_32    # ECR policy não pública
+  - CKV_AWS_51    # ECR image tags imutáveis
+  - CKV_AWS_136   # ECR criptografado com KMS
+  - CKV_AWS_42    # EFS encrypted
+  - CKV_AWS_64    # Redshift encrypted at rest
+  - CKV_AWS_105   # Redshift usa SSL
+  - CKV_AWS_142   # Redshift encrypted com KMS
+  - CKV_AWS_83    # Elasticsearch Domain com HTTPS
+  - CKV_AWS_137   # Elasticsearch dentro de uma VPC
+  - CKV_AWS_74    # DocumentDB encrypted at rest
+  - CKV_AWS_75    # Global Accelerator com flow logs
+  - CKV_AWS_78    # CodeBuild Project encryption habilitado
+  - CKV_AWS_112   # SSM document encrypted in transit
+  - CKV_AWS_127   # ELB usa certificados ACM
+  - CKV_AWS_130   # Subnet não deve ter assign public IP default
+  - CKV_AWS_150   # Load Balancer com deletion protection
+  - CKV_AWS_261   # Target Group com health check
+  - CKV_AWS_245   # Backups replicados devem ser criptografados
+
+# -------------------------
+#  Checks customizados
+# -------------------------
+external-checks-dir:
+  - ./checkov_policies
