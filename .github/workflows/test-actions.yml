@@ -21,7 +21,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Instalar Dependências (Checkov e JQ)
-        - name: Instalar Dependências (Checkov e JQ)
         run: |
           pip install checkov
           # A imagem do CodeBuild é Amazon Linux, então usamos 'yum' pse
