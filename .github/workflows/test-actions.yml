@@ -1,24 +1,60 @@
 name: Terraform Security Check with Checkov
 
+# Dispara o workflow em todo push para a branch 'main'
 on:
   push:
     branches: [ main ]
-  pull_request:
 
 permissions:
-  contents: read  # apenas leitura do repositório
+  contents: read # Apenas leitura do repositório
 
 jobs:
   checkov-scan:
-    runs-on: ubuntu-latest
+    # Nome do Job
     name: Run Checkov Security Scan
+    
+    # Diz ao GitHub Actions para usar seu projeto CodeBuild como a máquina (runner)
+    runs-on: codebuild-checkov-validate-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar o Checkov
-        run: pip install checkov
+      - name: Instalar Dependências (Checkov e JQ)
+        run: |
+          pip install checkov
+          # O 'jq' é necessário para ler a resposta JSON do assume-role
+          # A imagem do CodeBuild é baseada em Ubuntu, então usamos apt-get
+          apt-get update && apt-get install -y jq
+
+      - name: Assumir Role da conta PRD e exportar credenciais
+        run: |
+          echo "Assumindo a role da conta PRD..."
+          # 1. Pede o "crachá de visitante" (Assume Role)
+          CREDS=$(aws sts assume-role \
+                    --role-arn "arn:aws:iam::977919013454:role/clouddog-checkov-prd-role" \
+                    --role-session-name "CheckovGitHubActionSession")
+          
+          # 2. Configura o AWS CLI para USAR esse crachá nos próximos passos
+          #    Usamos $GITHUB_ENV para passar as variáveis entre os 'steps'
+          echo "AWS_ACCESS_KEY_ID=$(echo $CREDS | jq -r .Credentials.AccessKeyId)" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$(echo $CREDS | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=$(echo $CREDS | jq -r .Credentials.SessionToken)" >> $GITHUB_ENV
+          echo "Credenciais temporárias prontas para os próximos passos."
+      
+      - name: Baixar regras customizadas do S3 (de PRD)
+        run: |
+          echo "Baixando regras da pasta /checkov/ do bucket S3 de PRD..."
+          # Cria o diretório local que o seu comando checkov espera
+          mkdir ./checkov_policies
+          
+          # Baixa o conteúdo da pasta 'checkov' do S3 para o diretório local
+          # Este comando usa automaticamente as credenciais temporárias do passo anterior
+          aws s3 cp s3://clouddog-checkov-prd-bucket/checkov/ ./checkov_policies --recursive
+          echo "Regras baixadas."
 
       - name: Rodar análise de segurança
-        run: checkov -d . --external-checks-dir ./checkov_policies --check CUSTOM_AWS_TAGS_1,CUSTOM_AWS_BUDGET_1,CKV_AWS_41,CKV_AWS_19,CKV_AWS_20,CKV2_AWS_6,CKV_AWS_23,CKV_AWS_24,CKV_AWS_25,CKV_AWS_277,CKV_AWS_382,CKV2_AWS_5,CKV2_AWS_12,CKV_AWS_106,CKV2_AWS_2,CKV_AWS_96,CKV_AWS_139,CKV_AWS_140,CKV_AWS_146,CKV_AWS_293,CKV_AWS_302,CKV_AWS_313,CKV2_AWS_60,CKV2_AWS_69,CKV_AWS_49,CKV_AWS_60,CKV_AWS_61,CKV_AWS_62,CKV_AWS_63,CKV_AWS_107,CKV_AWS_108,CKV_AWS_109,CKV_AWS_110,CKV_AWS_111,CKV_AWS_274,CKV_AWS_289,CKV_AWS_290,CKV2_AWS_40,CKV_AWS_97,CKV_AWS_223,CKV_AWS_332,CKV_AWS_333,CKV_AWS_334,CKV_AWS_66,CKV_AWS_174,CKV_AWS_45,CKV_AWS_115,CKV_AWS_173,CKV_AWS_46,CKV_AWS_79,CKV_AWS_88,CKV2_AWS_41,CKV_AWS_135,CKV_AWS_29,CKV_AWS_30,CKV_AWS_32,CKV_AWS_51,CKV_AWS_136,CKV_AWS_42,CKV_AWS_64,CKV_AWS_105,CKV_AWS_142,CKV_AWS_83,CKV_AWS_137,CKV_AWS_74,CKV_AWS_75,CKV_AWS_78,CKV_AWS_112,CKV_AWS_127,CKV_AWS_130,CKV_AWS_150,CKV_AWS_261,CKV_AWS_245
+        # Este comando irá rodar e, se falhar, fará o Job inteiro falhar
+        run: |
+          echo "Rodando scan do Checkov com as regras baixadas..."
+          checkov -d . 
