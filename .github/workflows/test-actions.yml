@@ -42,19 +42,34 @@ jobs:
           echo "AWS_SESSION_TOKEN=$(echo $CREDS | jq -r .Credentials.SessionToken)" >> $GITHUB_ENV
           echo "Credenciais temporárias prontas para os próximos passos."
       
-      - name: Baixar regras customizadas do S3 (de PRD)
+      - name: Baixar arquivo de configuração do S3 (de PRD)
         run: |
-          echo "Baixando regras da pasta /checkov/ do bucket S3 de PRD..."
-          # Cria o diretório local que o seu comando checkov espera
-          mkdir ./checkov_policies
+          echo "Baixando arquivo checkov.yml da pasta /checkov/ do bucket S3 de PRD..."
+          mkdir -p ./checkov_policies
           
-          # Baixa o conteúdo da pasta 'checkov' do S3 para o diretório local
-          # Este comando usa automaticamente as credenciais temporárias do passo anterior
-          aws s3 cp s3://clouddog-checkov-prd-bucket/checkov/ ./checkov_policies --recursive
-          echo "Regras baixadas."
+          # Executa o comando de download
+          aws s3 cp s3://clouddog-checkov-prd-bucket/checkov/checkov.yml ./checkov_policies/checkov.yml
+          
+          # --- DEBUG ADICIONADO ABAIXO ---
+          echo "Verificando o conteúdo da pasta checkov_policies:"
+          ls -la ./checkov_policies
+          
+          echo "Verificando o caminho completo do workspace:"
+          echo ${{ github.workspace }}
+          
+          echo "Verificando se o arquivo existe no caminho esperado:"
+          if [ -f "${{ github.workspace }}/checkov_policies/checkov.yml" ]; then
+            echo "SUCESSO: Arquivo checkov.yml encontrado!"
+          else
+            echo "ERRO: Arquivo checkov.yml NÃO encontrado no caminho esperado!"
+            exit 1 # Falha o build aqui se o arquivo não foi baixado
+          fi
+          # --- DEBUG ADICIONADO ACIMA ---
+          
+          echo "Arquivo de configuração baixado."
 
+      # ... (o step "Rodar análise de segurança" continua o mesmo) ...
       - name: Rodar análise de segurança
-        # Este comando irá rodar e, se falhar, fará o Job inteiro falhar
         run: |
-          echo "Rodando scan do Checkov com as regras baixadas..."
-          checkov -d . --config-file ${{ github.workspace }}/checkov_policies/checkov.yml --skip-check CKV_AWS_19,CKV2_AWS_62,CKV2_AWS_6,CKV_AWS_144,CKV_AWS_21,CKV_AWS_145,CKV2_AWS_61,CKV_AWS_18,CKV_AWS_20,CKV2_AWS_6
+          echo "Rodando scan do Checkov na pasta ./terraform usando a CONFIGURAÇÃO do S3..."
+          checkov -d ./terraform --config-file ${{ github.workspace }}/checkov_policies/checkov.yml --skip-check CKV_AWS_19,CKV2_AWS_62,CKV2_AWS_6,CKV_AWS_144,CKV_AWS_21,CKV_AWS_145,CKV2_AWS_61,CKV_AWS_18,CKV_AWS_20,CKV2_AWS_6
